@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,8 +7,19 @@
     tools:context="rubyhuntersky.com.deltapie.MainActivity">
 
     <rubyhuntersky.com.deltapie.DeltaPieView
+        android:id="@+id/deltaPieView"
         android:layout_width="@dimen/demo_width_height"
         android:layout_height="@dimen/demo_width_height"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
         android:layout_margin="16dp"/>
 
-</FrameLayout>
+
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:padding="16dp"/>
+
+</RelativeLayout>

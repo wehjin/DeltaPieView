@@ -21,11 +21,18 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var centerX: Float = 0f
     private var centerY: Float = 0f
 
-    private val reductionDegrees = 360f * 0.05f
 
+    var delta: Float = 0f
+        set(value) {
+            field = Math.max(-1f, Math.min(1f, value))
+            invalidate()
+        }
+
+    private val deltaDegrees get() = 360f * delta
+
+    private val boundsRect = RectF()
     private val fillRect = RectF()
     private val arcRect = RectF()
-
 
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
             .apply {
@@ -43,8 +50,9 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         fillInsetPixels = Math.min(w, h) * 0.5f / 4f
+        boundsRect.set(0f, 0f, w.toFloat(), h.toFloat())
         with(fillRect) {
-            set(0f, 0f, w.toFloat(), h.toFloat())
+            set(boundsRect)
             inset(fillInsetPixels, fillInsetPixels)
         }
         with(arcRect) {
@@ -64,19 +72,32 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     override fun onDraw(canvas: Canvas) {
         with(canvas) {
+            if (deltaDegrees > 0) {
+                return
+            }
             drawOval(fillRect, fillPaint)
-            drawArc(arcRect, -90f, -reductionDegrees, false, linePaint)
+            drawArc(arcRect, -90f, deltaDegrees, false, linePaint)
             drawLines(startLineFloats, linePaint)
 
             save()
-            rotate(-reductionDegrees, centerX, centerY)
+            rotate(deltaDegrees, centerX, centerY)
             drawLine(centerX, fillInsetPixels, centerX, 0f, linePaint)
+            restore()
+
+            save()
+            if (deltaDegrees > -90) {
+                canvas.clipRect(0f, 0f, centerX, centerY)
+            }
+            rotate(deltaDegrees, centerX, centerY)
+            save()
             val arrowWingX = centerX + arrowWingDeltaX
             val arrowTipY = fillInsetPixels / 2
+            val arrowTipX = centerX + 2
             val arrowWingY1 = arrowTipY - arrowWingPixels
             val arrowWingY2 = arrowTipY + arrowWingPixels
-            drawLine(centerX, arrowTipY, arrowWingX, arrowWingY1, linePaint)
-            drawLine(centerX, arrowTipY, arrowWingX, arrowWingY2, linePaint)
+            drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, linePaint)
+            drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, linePaint)
+            restore()
             restore()
         }
     }

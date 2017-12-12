@@ -10,10 +10,11 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     : View(context, attrs, defStyleAttr, defStyleRed) {
 
     private var endMarkPixels = 16.toPixels()
-    private val fillInsetPixels get() = endMarkPixels / 2
 
-    private val arrowWingPixels = 4.toPixels()
-    private val arrowWingDeltaX = arrowWingPixels * 1.25f
+    private val fillInsetPixels get() = endMarkPixels / 2
+    private val arrowWingPixels get() = endMarkPixels / 2.5f
+    private val arrowWingDeltaX get() = arrowWingPixels * 1.25f
+
     private var centerX: Float = 0f
     private var centerY: Float = 0f
 
@@ -70,12 +71,12 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
             .apply { color = Color.parseColor("#e0ffffff") }
 
     private val divestmentPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-            .apply { color = Color.parseColor("#30000000") }
+            .apply { color = Color.parseColor("#20000000") }
 
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        endMarkPixels = Math.min(w, h) * 0.5f / 4f
+        endMarkPixels = Math.min(w, h) * 0.5f * .4f
         boundsRect.set(0f, 0f, w.toFloat(), h.toFloat())
         with(fillRect) {
             set(boundsRect)
@@ -83,7 +84,7 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
         }
         with(arcRect) {
             set(boundsRect)
-            inset(fillInsetPixels, fillInsetPixels)
+            inset(fillInsetPixels - 1, fillInsetPixels - 1)
         }
         centerX = boundsRect.centerX()
         centerY = boundsRect.centerY()
@@ -103,7 +104,6 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private fun Canvas.drawInvestmentPie() {
         drawOval(fillRect, occupiedPaint)
         drawPath(wedgePath, investmentPaint)
-        //drawArc(fillRect, -90f, 360f - deltaDegrees, true, occupiedPaint)
 
         save()
         rotate(-deltaDegrees, centerX, centerY)
@@ -117,7 +117,7 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
         if (Math.abs(deltaDegrees) < 45f) {
             clipPath(arrowClipPath)
         }
-        val arrowTipY = fillInsetPixels
+        val arrowTipY = fillInsetPixels + 1
         val arrowTipX = centerX - 2
         val arrowWingX = centerX - arrowWingDeltaX
         val arrowWingY1 = arrowTipY - arrowWingPixels

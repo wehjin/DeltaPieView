@@ -5,6 +5,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
+import kotlin.properties.Delegates
 
 class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0, defStyleRed: Int = 0)
     : View(context, attrs, defStyleAttr, defStyleRed) {
@@ -55,14 +56,24 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private val arrowClipPath = Path()
     private val wedgePath = Path()
 
+    var fillColor: Int by Delegates.observable(Color.parseColor("#aabbcc")) { _, _, new ->
+        occupiedPaint.color = new
+        invalidate()
+    }
+
+    var strokeColor: Int by Delegates.observable(Color.parseColor("#667788")) { _, _, new ->
+        linePaint.color = new
+        invalidate()
+    }
+
     private val occupiedPaint = Paint(Paint.ANTI_ALIAS_FLAG)
             .apply {
-                color = Color.parseColor("#aabbcc")
+                color = fillColor
             }
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG)
             .apply {
-                color = Color.parseColor("#667788")
+                color = strokeColor
                 strokeWidth = 2.toPixels()
                 style = Paint.Style.STROKE
             }
@@ -72,7 +83,6 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     private val divestmentPaint = Paint(Paint.ANTI_ALIAS_FLAG)
             .apply { color = Color.parseColor("#20000000") }
-
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)

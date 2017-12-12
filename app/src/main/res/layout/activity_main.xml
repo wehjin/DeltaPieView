@@ -6,13 +6,17 @@
     android:layout_height="match_parent"
     tools:context="rubyhuntersky.com.deltapie.MainActivity">
 
-    <rubyhuntersky.com.deltapie.DeltaPieView
-        android:id="@+id/deltaPieView"
-        android:layout_width="@dimen/demo_width_height"
-        android:layout_height="@dimen/demo_width_height"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_margin="16dp"/>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <rubyhuntersky.com.deltapie.DeltaPieView
+            android:id="@+id/deltaPieView"
+            android:layout_width="@dimen/demo_width_height"
+            android:layout_height="@dimen/demo_width_height"
+            android:layout_gravity="start"/>
+    </FrameLayout>
 
 
     <SeekBar

@@ -1,10 +1,7 @@
 package rubyhuntersky.com.deltapie
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
+import android.graphics.*
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
@@ -16,8 +13,6 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     private val arrowWingPixels = 4.toPixels()
     private val arrowWingDeltaX = arrowWingPixels * 1.25f
-
-    private val startLineFloats = FloatArray(4)
     private var centerX: Float = 0f
     private var centerY: Float = 0f
 
@@ -25,14 +20,26 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     var delta: Float = 0f
         set(value) {
             field = Math.max(-1f, Math.min(1f, value))
+            updateArrowClipPath()
             invalidate()
         }
+
+    private fun updateArrowClipPath() {
+        with(arrowClipPath) {
+            reset()
+            moveTo(centerX, centerY)
+            val absDeltaDegrees = Math.abs(deltaDegrees)
+            arcTo(boundsRect, -90f - absDeltaDegrees, absDeltaDegrees)
+            close()
+        }
+    }
 
     private val deltaDegrees get() = 360f * delta
 
     private val boundsRect = RectF()
     private val fillRect = RectF()
     private val arcRect = RectF()
+    private val arrowClipPath = Path()
 
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
             .apply {
@@ -56,50 +63,75 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
             inset(fillInsetPixels, fillInsetPixels)
         }
         with(arcRect) {
-            val halfInset = -(fillInsetPixels / 2 + 1)
-            set(fillRect)
+            val halfInset = fillInsetPixels / 2 - 1
+            set(boundsRect)
             inset(halfInset, halfInset)
         }
-        centerX = fillRect.centerX()
-        centerY = fillRect.centerY()
-        with(startLineFloats) {
-            set(0, centerX)
-            set(1, centerY)
-            set(2, centerX)
-            set(3, 0f)
-        }
+        centerX = boundsRect.centerX()
+        centerY = boundsRect.centerY()
+        updateArrowClipPath()
     }
 
     override fun onDraw(canvas: Canvas) {
         with(canvas) {
             if (deltaDegrees > 0) {
-                return
+                drawEnlargementPie()
+            } else {
+                drawReductionPie()
             }
-            drawOval(fillRect, fillPaint)
-            drawArc(arcRect, -90f, deltaDegrees, false, linePaint)
-            drawLines(startLineFloats, linePaint)
-
-            save()
-            rotate(deltaDegrees, centerX, centerY)
-            drawLine(centerX, fillInsetPixels, centerX, 0f, linePaint)
-            restore()
-
-            save()
-            if (deltaDegrees > -90) {
-                canvas.clipRect(0f, 0f, centerX, centerY)
-            }
-            rotate(deltaDegrees, centerX, centerY)
-            save()
-            val arrowWingX = centerX + arrowWingDeltaX
-            val arrowTipY = fillInsetPixels / 2
-            val arrowTipX = centerX + 2
-            val arrowWingY1 = arrowTipY - arrowWingPixels
-            val arrowWingY2 = arrowTipY + arrowWingPixels
-            drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, linePaint)
-            drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, linePaint)
-            restore()
-            restore()
         }
+    }
+
+    private fun Canvas.drawEnlargementPie() {
+        drawArc(fillRect, -90f, 360f - deltaDegrees, true, fillPaint)
+
+        save()
+        rotate(-deltaDegrees, centerX, centerY)
+        drawLine(centerX, centerY, centerX, 0f, linePaint)
+        restore()
+
+        drawLine(centerX, fillInsetPixels, centerX, 0f, linePaint)
+        drawArc(arcRect, 270f - deltaDegrees, deltaDegrees, false, linePaint)
+
+        save()
+        if (Math.abs(deltaDegrees) < 45f) {
+            clipPath(arrowClipPath)
+        }
+        val arrowTipY = fillInsetPixels / 2
+        val arrowTipX = centerX - 2
+        val arrowWingX = centerX - arrowWingDeltaX
+        val arrowWingY1 = arrowTipY - arrowWingPixels
+        val arrowWingY2 = arrowTipY + arrowWingPixels
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, linePaint)
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, linePaint)
+        restore()
+    }
+
+    private fun Canvas.drawReductionPie() {
+        drawOval(fillRect, fillPaint)
+        drawArc(arcRect, -90f, deltaDegrees, false, linePaint)
+        drawLine(centerX, centerY, centerX, 0f, linePaint)
+
+        save()
+        rotate(deltaDegrees, centerX, centerY)
+        drawLine(centerX, fillInsetPixels, centerX, 0f, linePaint)
+        restore()
+
+        save()
+        if (Math.abs(deltaDegrees) < 45f) {
+            clipPath(arrowClipPath)
+        }
+        rotate(deltaDegrees, centerX, centerY)
+        save()
+        val arrowTipY = fillInsetPixels / 2
+        val arrowTipX = centerX + 2
+        val arrowWingX = centerX + arrowWingDeltaX
+        val arrowWingY1 = arrowTipY - arrowWingPixels
+        val arrowWingY2 = arrowTipY + arrowWingPixels
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, linePaint)
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, linePaint)
+        restore()
+        restore()
     }
 
     private fun Int.toPixels(): Float {

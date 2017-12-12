@@ -16,12 +16,12 @@ class MainActivity : AppCompatActivity() {
                 override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
                 override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                    val delta = (progress * 2 - 100) / 100f
+                    val delta = -(progress * 2 - 100) / 100f
                     Log.d(MainActivity::class.java.simpleName, "Delta $delta")
                     update(delta)
                 }
             })
-            progress = 55
+            progress = 45
         }
     }
 

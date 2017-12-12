@@ -7,7 +7,8 @@
     tools:context="rubyhuntersky.com.deltapie.MainActivity">
 
     <rubyhuntersky.com.deltapie.DeltaPieView
-        android:layout_width="152dp"
-        android:layout_height="152dp"/>
+        android:layout_width="@dimen/demo_width_height"
+        android:layout_height="@dimen/demo_width_height"
+        android:layout_margin="16dp"/>
 
 </FrameLayout>

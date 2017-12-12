@@ -9,7 +9,8 @@ import android.view.View
 class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0, defStyleRed: Int = 0)
     : View(context, attrs, defStyleAttr, defStyleRed) {
 
-    private var fillInsetPixels = 16.toPixels()
+    private var endMarkPixels = 16.toPixels()
+    private val fillInsetPixels get() = endMarkPixels / 2
 
     private val arrowWingPixels = 4.toPixels()
     private val arrowWingDeltaX = arrowWingPixels * 1.25f
@@ -20,16 +21,27 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     var delta: Float = 0f
         set(value) {
             field = Math.max(-1f, Math.min(1f, value))
-            updateArrowClipPath()
+            updatePaths()
             invalidate()
         }
 
-    private fun updateArrowClipPath() {
+    private fun updatePaths() {
         with(arrowClipPath) {
             reset()
             moveTo(centerX, centerY)
             val absDeltaDegrees = Math.abs(deltaDegrees)
             arcTo(boundsRect, -90f - absDeltaDegrees, absDeltaDegrees)
+            close()
+        }
+        with(wedgePath) {
+            reset()
+            val absDeltaDegrees = Math.abs(deltaDegrees)
+            if (absDeltaDegrees < 360f) {
+                moveTo(centerX, centerY)
+                arcTo(fillRect, -90f - absDeltaDegrees, absDeltaDegrees)
+            } else {
+                addOval(fillRect, Path.Direction.CCW)
+            }
             close()
         }
     }
@@ -40,8 +52,9 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private val fillRect = RectF()
     private val arcRect = RectF()
     private val arrowClipPath = Path()
+    private val wedgePath = Path()
 
-    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val occupiedPaint = Paint(Paint.ANTI_ALIAS_FLAG)
             .apply {
                 color = Color.parseColor("#aabbcc")
             }
@@ -53,51 +66,58 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
                 style = Paint.Style.STROKE
             }
 
+    private val investmentPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            .apply { color = Color.parseColor("#e0ffffff") }
+
+    private val divestmentPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            .apply { color = Color.parseColor("#30000000") }
+
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        fillInsetPixels = Math.min(w, h) * 0.5f / 4f
+        endMarkPixels = Math.min(w, h) * 0.5f / 4f
         boundsRect.set(0f, 0f, w.toFloat(), h.toFloat())
         with(fillRect) {
             set(boundsRect)
             inset(fillInsetPixels, fillInsetPixels)
         }
         with(arcRect) {
-            val halfInset = fillInsetPixels / 2 - 1
             set(boundsRect)
-            inset(halfInset, halfInset)
+            inset(fillInsetPixels, fillInsetPixels)
         }
         centerX = boundsRect.centerX()
         centerY = boundsRect.centerY()
-        updateArrowClipPath()
+        updatePaths()
     }
 
     override fun onDraw(canvas: Canvas) {
         with(canvas) {
             if (deltaDegrees > 0) {
-                drawEnlargementPie()
+                drawInvestmentPie()
             } else {
-                drawReductionPie()
+                drawDivestmentPie()
             }
         }
     }
 
-    private fun Canvas.drawEnlargementPie() {
-        drawArc(fillRect, -90f, 360f - deltaDegrees, true, fillPaint)
+    private fun Canvas.drawInvestmentPie() {
+        drawOval(fillRect, occupiedPaint)
+        drawPath(wedgePath, investmentPaint)
+        //drawArc(fillRect, -90f, 360f - deltaDegrees, true, occupiedPaint)
 
         save()
         rotate(-deltaDegrees, centerX, centerY)
         drawLine(centerX, centerY, centerX, 0f, linePaint)
         restore()
 
-        drawLine(centerX, fillInsetPixels, centerX, 0f, linePaint)
+        drawLine(centerX, endMarkPixels, centerX, 0f, linePaint)
         drawArc(arcRect, 270f - deltaDegrees, deltaDegrees, false, linePaint)
 
         save()
         if (Math.abs(deltaDegrees) < 45f) {
             clipPath(arrowClipPath)
         }
-        val arrowTipY = fillInsetPixels / 2
+        val arrowTipY = fillInsetPixels
         val arrowTipX = centerX - 2
         val arrowWingX = centerX - arrowWingDeltaX
         val arrowWingY1 = arrowTipY - arrowWingPixels
@@ -107,14 +127,15 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
         restore()
     }
 
-    private fun Canvas.drawReductionPie() {
-        drawOval(fillRect, fillPaint)
+    private fun Canvas.drawDivestmentPie() {
+        drawOval(fillRect, occupiedPaint)
+        drawPath(wedgePath, divestmentPaint)
         drawArc(arcRect, -90f, deltaDegrees, false, linePaint)
         drawLine(centerX, centerY, centerX, 0f, linePaint)
 
         save()
         rotate(deltaDegrees, centerX, centerY)
-        drawLine(centerX, fillInsetPixels, centerX, 0f, linePaint)
+        drawLine(centerX, endMarkPixels, centerX, 0f, linePaint)
         restore()
 
         save()
@@ -123,7 +144,7 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
         }
         rotate(deltaDegrees, centerX, centerY)
         save()
-        val arrowTipY = fillInsetPixels / 2
+        val arrowTipY = fillInsetPixels
         val arrowTipX = centerX + 2
         val arrowWingX = centerX + arrowWingDeltaX
         val arrowWingY1 = arrowTipY - arrowWingPixels

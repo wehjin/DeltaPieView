@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="rubyhuntersky.com.deltapie.MainActivity">
+    tools:context="com.rubyhuntersky.deltapie.demo.MainActivity">
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <rubyhuntersky.com.deltapie.DeltaPieView
+        <com.rubyhuntersky.deltapie.DeltaPieView
             android:id="@+id/deltaPieView"
             android:layout_width="@dimen/demo_width_height"
             android:layout_height="@dimen/demo_width_height"

@@ -1,4 +1,4 @@
-package rubyhuntersky.com.deltapie
+package com.rubyhuntersky.deltapie
 
 import android.content.Context
 import android.graphics.*
@@ -24,7 +24,7 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
         invalidate()
     }
 
-    var darkColor: Int by Delegates.observable(Color.parseColor("#f50057")) { _, _, new ->
+    var darkColor: Int by Delegates.observable(Color.parseColor("#c51162")) { _, _, new ->
         investmentStrokePaint.color = new
         divestmentFillPaint.color = new
         invalidate()

@@ -1,4 +1,4 @@
-package rubyhuntersky.com.deltapie
+package com.rubyhuntersky.deltapie.demo
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity

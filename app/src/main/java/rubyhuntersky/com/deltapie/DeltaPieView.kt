@@ -19,12 +19,71 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var centerX: Float = 0f
     private var centerY: Float = 0f
 
+    var neutralColor: Int by Delegates.observable(Color.parseColor("#3f51b5")) { _, _, new ->
+        fillPaint.color = new
+        invalidate()
+    }
+
+    var darkColor: Int by Delegates.observable(Color.parseColor("#f50057")) { _, _, new ->
+        investmentStrokePaint.color = new
+        divestmentFillPaint.color = new
+        invalidate()
+    }
+
+    var lightColor: Int by Delegates.observable(Color.parseColor("#ff80ab")) { _, _, new ->
+        divestmentStrokePaint.color = new
+        investmentFillPaint.color = new
+        invalidate()
+    }
+
+    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            .apply {
+                color = neutralColor
+            }
+
+    private val investmentStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            .apply {
+                color = darkColor
+                strokeWidth = 2.toPixels()
+                style = Paint.Style.STROKE
+            }
+
+    private val divestmentStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            .apply {
+                color = lightColor
+                strokeWidth = 2.toPixels()
+                style = Paint.Style.STROKE
+            }
+
+    private val investmentFillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            .apply {
+                color = lightColor
+            }
+
+    private val divestmentFillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            .apply {
+                color = darkColor
+            }
 
     var delta: Float = 0f
         set(value) {
             field = Math.max(-1f, Math.min(1f, value))
             updatePaths()
             invalidate()
+        }
+
+    private val strokePaint
+        get() = if (delta > 0) {
+            investmentStrokePaint
+        } else {
+            divestmentStrokePaint
+        }
+
+    private val vestmentPaint
+        get() = if (delta > 0) {
+            investmentFillPaint
+        } else {
+            divestmentFillPaint
         }
 
     private fun updatePaths() {
@@ -40,9 +99,9 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
             val absDeltaDegrees = Math.abs(deltaDegrees)
             if (absDeltaDegrees < 360f) {
                 moveTo(centerX, centerY)
-                arcTo(fillRect, -90f - absDeltaDegrees, absDeltaDegrees)
+                arcTo(boundsRect, -90f - absDeltaDegrees, absDeltaDegrees)
             } else {
-                addOval(fillRect, Path.Direction.CCW)
+                addOval(boundsRect, Path.Direction.CCW)
             }
             close()
         }
@@ -55,34 +114,6 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private val arcRect = RectF()
     private val arrowClipPath = Path()
     private val wedgePath = Path()
-
-    var fillColor: Int by Delegates.observable(Color.parseColor("#aabbcc")) { _, _, new ->
-        occupiedPaint.color = new
-        invalidate()
-    }
-
-    var strokeColor: Int by Delegates.observable(Color.parseColor("#667788")) { _, _, new ->
-        linePaint.color = new
-        invalidate()
-    }
-
-    private val occupiedPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-            .apply {
-                color = fillColor
-            }
-
-    private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-            .apply {
-                color = strokeColor
-                strokeWidth = 2.toPixels()
-                style = Paint.Style.STROKE
-            }
-
-    private val investmentPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-            .apply { color = Color.parseColor("#e0ffffff") }
-
-    private val divestmentPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-            .apply { color = Color.parseColor("#20000000") }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
@@ -112,16 +143,15 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     private fun Canvas.drawInvestmentPie() {
-        drawOval(fillRect, occupiedPaint)
-        drawPath(wedgePath, investmentPaint)
+        drawOval(fillRect, fillPaint)
+        drawPath(wedgePath, vestmentPaint)
 
         save()
         rotate(-deltaDegrees, centerX, centerY)
-        drawLine(centerX, centerY, centerX, 0f, linePaint)
+        drawLine(centerX, centerY, centerX, 0f, strokePaint)
         restore()
 
-        drawLine(centerX, endMarkPixels, centerX, 0f, linePaint)
-        drawArc(arcRect, 270f - deltaDegrees, deltaDegrees, false, linePaint)
+        drawArc(arcRect, 270f - deltaDegrees, deltaDegrees, false, strokePaint)
 
         save()
         if (Math.abs(deltaDegrees) < 45f) {
@@ -132,21 +162,17 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
         val arrowWingX = centerX - arrowWingDeltaX
         val arrowWingY1 = arrowTipY - arrowWingPixels
         val arrowWingY2 = arrowTipY + arrowWingPixels
-        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, linePaint)
-        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, linePaint)
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, strokePaint)
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, strokePaint)
         restore()
     }
 
     private fun Canvas.drawDivestmentPie() {
-        drawOval(fillRect, occupiedPaint)
-        drawPath(wedgePath, divestmentPaint)
-        drawArc(arcRect, -90f, deltaDegrees, false, linePaint)
-        drawLine(centerX, centerY, centerX, 0f, linePaint)
+        drawOval(fillRect, fillPaint)
+        drawPath(wedgePath, vestmentPaint)
 
-        save()
-        rotate(deltaDegrees, centerX, centerY)
-        drawLine(centerX, endMarkPixels, centerX, 0f, linePaint)
-        restore()
+        drawArc(arcRect, -90f, deltaDegrees, false, strokePaint)
+        drawLine(centerX, centerY, centerX, 0f, strokePaint)
 
         save()
         if (Math.abs(deltaDegrees) < 45f) {
@@ -159,8 +185,8 @@ class DeltaPieView @JvmOverloads constructor(context: Context, attrs: AttributeS
         val arrowWingX = centerX + arrowWingDeltaX
         val arrowWingY1 = arrowTipY - arrowWingPixels
         val arrowWingY2 = arrowTipY + arrowWingPixels
-        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, linePaint)
-        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, linePaint)
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY1, strokePaint)
+        drawLine(arrowTipX, arrowTipY, arrowWingX, arrowWingY2, strokePaint)
         restore()
         restore()
     }
